@@ -29,33 +29,36 @@ cp -r session-manager ~/.claude/skills/
 chmod +x ~/.claude/skills/session-manager/scripts/*
 ```
 
-## 使用
+## 使用方式
 
-```bash
-# 列出所有 session
-/session list
+**用自然语言表达意图**，Claude 会自动执行对应操作：
 
-# 切换到指定 session（新开终端）
-/session switch <id>
-
-# 重命名 session
-/session rename <id> "新名称"
-
-# 收藏/取消收藏
-/session favorite <id>
-
-# 搜索 session
-/session search <关键词>
-
-# 删除 session
-/session delete <id>
+```
+列出所有 session
+查看我的会话
+切换到 session a1b2c3d
+重命名 session a1b2c3d 为"修复登录Bug"
+收藏 session a1b2c3d
+搜索包含 api 的 session
+删除 session a1b2c3d
 ```
 
-## 命令详解
+## 支持的自然语言指令
 
-### /session list
+| 意图 | 示例说法 |
+|-----|---------|
+| 列出/查看 | "列出所有 session"、"查看我的会话"、"有哪些 session" |
+| 切换/打开 | "切换到 session xxx"、"打开 session xxx"、"恢复之前的会话" |
+| 重命名 | "重命名 session xxx"、"给 session 起个名字"、"自动生成名称" |
+| 收藏 | "收藏 session xxx"、"标记为重要"、"取消收藏" |
+| 删除 | "删除 session xxx"、"清理 session"、"永久删除" |
+| 搜索 | "搜索包含 xxx 的 session"、"查找 session" |
 
-列出所有 session，显示 ID、项目名称、摘要、消息数、最后活跃时间和收藏状态。
+## 功能详解
+
+### 列出 Session
+
+显示 ID、项目名称、摘要、消息数、最后活跃时间和收藏状态。
 
 ```
 ID        项目名称              名称/摘要              消息数    最后活跃        收藏
@@ -64,23 +67,28 @@ a1b2c3d   ask-me-anything       Session管理器设计      45       2分钟前 
 e4f5g6h   report-api            API 项目分析           23       1小时前
 ```
 
-### /session switch <id>
+### 切换 Session
 
 在新终端窗口中切换到指定 session。支持 macOS (Terminal.app) 和 Linux (gnome-terminal/konsole/xterm)。
 
-### /session rename <id> [name]
+### 重命名 Session
 
-重命名 session。如果不指定 name，会自动生成智能名称。
+重命名 session。如果不指定名称，会自动生成智能名称。
 
-### /session favorite <id>
+**智能命名规则：**
+- 基于第一条用户消息
+- 识别关键词：修复、添加、创建、删除、重构、分析、测试等
+- 限制长度在 30 字符以内
+
+### 收藏 Session
 
 切换 session 的收藏状态。收藏状态在列表中显示为 ⭐。
 
-### /session search <keyword>
+### 搜索 Session
 
 搜索 session，支持项目路径、名称、内容搜索。
 
-### /session delete <id>
+### 删除 Session
 
 删除 session。默认移动到回收站 `~/.claude/sessions/trash/`，加 `--permanent` 永久删除。
 
@@ -102,13 +110,6 @@ session-manager/
 │   └── LICENSE
 └── README.md
 ```
-
-## 智能命名规则
-
-自动命名基于第一条用户消息：
-- 识别关键词：修复、添加、创建、删除、重构、分析、测试、实现、优化等
-- 结合操作内容生成摘要
-- 限制长度在 30 字符以内
 
 ## 系统要求
 
