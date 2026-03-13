@@ -142,15 +142,30 @@ def scan_sessions():
 
                         if msg_type == 'user':
                             message_count += 1
-                            if first_message is None:
-                                content = data.get('message', {}).get('content', '')
-                                if isinstance(content, list):
-                                    for item in content:
-                                        if item.get('type') == 'text':
-                                            first_message = item.get('text', '')
-                                            break
-                                elif isinstance(content, str):
-                                    first_message = content
+                            content = data.get('message', {}).get('content', '')
+                            text = None
+
+                            if isinstance(content, list):
+                                for item in content:
+                                    if item.get('type') == 'text':
+                                        text = item.get('text', '')
+                                        break
+                            elif isinstance(content, str):
+                                text = content
+
+                            # 跳过系统生成的消息，找真正的用户输入
+                            if text and first_message is None:
+                                # 跳过这些系统标记
+                                skip_prefixes = [
+                                    '[Request interrupted',
+                                    '<local-command-caveat>',
+                                    '<command-message>',
+                                    '[Request interrupted by user]',
+                                ]
+                                is_system = any(text.strip().startswith(p) for p in skip_prefixes)
+
+                                if not is_system:
+                                    first_message = text
 
                         # 获取时间戳
                         ts = data.get('timestamp')
@@ -193,21 +208,38 @@ def generate_summary(first_message):
     if not first_message:
         return "无消息"
 
-    # 跳过系统命令和标记
-    skip_patterns = [
-        '/',
-        '<local-command-caveat>',
-        '<command-message>',
-        '[Request interrupted',
-        'Caveat:',
-        'Implement the following plan',  # 计划消息
-    ]
-    for pattern in skip_patterns:
-        if first_message.startswith(pattern) or pattern in first_message[:50]:
-            return "计划/任务会话"
+    # 清理文本
+    text = first_message.strip()
 
-    # 截断并清理
-    return truncate_text(first_message, 25)
+    # 跳过纯命令
+    if text.startswith('<command-name>'):
+        return "命令执行"
+
+    # 跳过纯系统标记
+    if text.startswith(('<local-command-caveat>', '[Request interrupted by user]')):
+        return "系统消息"
+
+    # 对于 "Implement the following plan:" 开头的，提取后面的标题
+    if text.startswith('Implement the following plan:'):
+        remaining = text[len('Implement the following plan:'):].strip()
+        # 提取第一行作为标题
+        first_line = remaining.split('\n')[0].strip()
+        # 去掉开头的 # 和空格
+        if first_line.startswith('#'):
+            first_line = first_line.lstrip('#').strip()
+        if first_line:
+            return truncate_text(first_line, 25)
+
+    # 对于 markdown 标题 # xxx，提取标题内容
+    if text.startswith('#'):
+        # 提取第一行并清理
+        first_line = text.split('\n')[0].strip()
+        first_line = first_line.lstrip('#').strip()
+        if first_line:
+            return truncate_text(first_line, 25)
+
+    # 正常的用户消息，直接截断显示
+    return truncate_text(text, 25)
 
 
 def main():
